@@ -117,21 +117,21 @@ stimuli:
 
   decision_generous:
     type: text
-    text: You chose: Generous allocation
+    text: "You chose: Generous allocation"
     color: green
     height: 40
     font: SimHei
 
   decision_equal:
     type: text
-    text: You chose: Equal allocation
+    text: "You chose: Equal allocation"
     color: yellow
     height: 40
     font: SimHei
 
   decision_selfish:
     type: text
-    text: You chose: Selfish allocation
+    text: "You chose: Selfish allocation"
     color: red
     height: 40
     font: SimHei
