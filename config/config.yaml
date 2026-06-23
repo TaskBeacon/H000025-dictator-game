@@ -19,16 +19,16 @@ subinfo_fields:
       - Female
 
 subinfo_mapping:
-  subject_id: Subject ID (3 digits)
-  subname: Name
-  age: Age
-  gender: Gender
+  subject_id: 被试编号（3位）
+  subname: 姓名
+  age: 年龄
+  gender: 性别
   Male: Male
   Female: Female
-  Participant Information: Participant Information
-  registration_failed: Registration failed
-  registration_successful: Registration successful
-  invalid_input: "{field} is invalid"
+  Participant Information: 被试信息
+  registration_failed: 注册失败
+  registration_successful: 注册成功
+  invalid_input: "{field} 输入无效"
 
 window:
   size: [1280, 720]
@@ -41,7 +41,7 @@ window:
   monitor_distance_cm: 60
 
 task:
-  task_name: dictator_game_preview
+  task_name: dictator_game
   save_path: ./outputs/human
   total_blocks: 3
   total_trials: 72
@@ -78,14 +78,14 @@ stimuli:
   instruction_text:
     type: text
     text: |
-      Dictator Game
+      独裁者博弈任务
 
-      On each trial, choose one allocation rule for the current stake:
-      Left (F): Generous split (you 30%, other 70%)
-      Middle (Space): Equal split (you 50%, other 50%)
-      Right (J): Selfish split (you 90%, other 10%)
+      每一轮你决定如何分配一笔资金：
+      左侧（F）：慷慨分配（你 30%，对方 70%）
+      中间（空格）：平均分配（你 50%，对方 50%）
+      右侧（J）：自利分配（你 90%，对方 10%）
 
-      Press Space to begin.
+      按空格键开始。
     color: white
     height: 28
     wrapWidth: 980
@@ -94,10 +94,10 @@ stimuli:
   stake_prompt_text:
     type: text
     text: |
-      Current stake: {stake} points
-      Condition: {condition_label}
+      本轮分配金额：{stake} 分
+      条件：{condition_label}
 
-      Get ready to make your allocation decision.
+      请准备做出分配决策
     color: white
     height: 34
     wrapWidth: 980
@@ -106,10 +106,10 @@ stimuli:
   decision_panel:
     type: text
     text: |
-      Stake amount: {stake} points
-      Left: Generous (you 30% / other 70%)
-      Middle: Equal (you 50% / other 50%)
-      Right: Selfish (you 90% / other 10%)
+      当前可分配金额：{stake} 分
+      左：慷慨（你30% / 对方70%）
+      中：平均（你50% / 对方50%）
+      右：自利（你90% / 对方10%）
     color: white
     height: 34
     wrapWidth: 980
@@ -117,28 +117,28 @@ stimuli:
 
   decision_generous:
     type: text
-    text: "You chose: Generous allocation"
+    text: "你选择了：慷慨分配"
     color: green
     height: 40
     font: SimHei
 
   decision_equal:
     type: text
-    text: "You chose: Equal allocation"
+    text: "你选择了：平均分配"
     color: yellow
     height: 40
     font: SimHei
 
   decision_selfish:
     type: text
-    text: "You chose: Selfish allocation"
+    text: "你选择了：自利分配"
     color: red
     height: 40
     font: SimHei
 
   decision_timeout:
     type: text
-    text: No response. Equal allocation applied.
+    text: 未作答，按平均分配处理
     color: white
     height: 38
     font: SimHei
@@ -146,13 +146,13 @@ stimuli:
   outcome_feedback:
     type: text
     text: |
-      Stake: {stake} points
-      Your choice: {choice_label}
+      本轮总金额：{stake} 分
+      你的选择：{choice_label}
 
-      You receive: {self_amount} points
-      Other receives: {other_amount} points
-      Your cumulative: {self_total} points
-      Other cumulative: {other_total} points
+      你获得：{self_amount} 分
+      对方获得：{other_amount} 分
+      你的累计：{self_total} 分
+      对方累计：{other_total} 分
     color: white
     height: 32
     wrapWidth: 980
@@ -161,14 +161,14 @@ stimuli:
   block_break:
     type: text
     text: |
-      Block {block_num}/{total_blocks} complete
-      Generous rate: {generous_rate}
-      Equal rate: {equal_rate}
-      Selfish rate: {selfish_rate}
-      Block you/other: {block_self_total}/{block_other_total} points
-      Cumulative you/other: {self_total}/{other_total} points
+      第 {block_num}/{total_blocks} 区块结束
+      慷慨率：{generous_rate:.1%}
+      平均率：{equal_rate:.1%}
+      自利率：{selfish_rate:.1%}
+      本区块你/对方：{block_self_total}/{block_other_total} 分
+      累计你/对方：{self_total}/{other_total} 分
 
-      Press Space to continue.
+      按空格键继续。
     color: white
     height: 24
     wrapWidth: 980
@@ -177,10 +177,10 @@ stimuli:
   good_bye:
     type: text
     text: |
-      Task complete
-      Final you/other payoff: {self_total}/{other_total} points
+      任务结束
+      最终你/对方收益：{self_total}/{other_total} 分
 
-      Press Space to exit.
+      按空格键退出。
     color: white
     height: 30
     wrapWidth: 980
@@ -220,13 +220,13 @@ controller:
   enable_logging: true
   allocation_profiles:
     generous:
-      label: Generous allocation
+      label: 慷慨分配
       self_ratio: 0.3
     equal:
-      label: Equal allocation
+      label: 平均分配
       self_ratio: 0.5
     selfish:
-      label: Selfish allocation
+      label: 自利分配
       self_ratio: 0.9
   stake_levels:
     low_stake: 10

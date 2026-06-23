@@ -14,9 +14,9 @@ export function parse_dictator_condition(condition: string): PlannedDictatorCond
 }
 
 export function summarizeBlock(rows: ReducedTrialRow[], blockId: string): {
-  generous_rate: string;
-  equal_rate: string;
-  selfish_rate: string;
+  generous_rate: number;
+  equal_rate: number;
+  selfish_rate: number;
   block_self_total: number;
   block_other_total: number;
   self_total: number;
@@ -32,9 +32,9 @@ export function summarizeBlock(rows: ReducedTrialRow[], blockId: string): {
   const selfTotal = rows.length > 0 ? Number(rows[rows.length - 1].self_total ?? 0) : 0;
   const otherTotal = rows.length > 0 ? Number(rows[rows.length - 1].other_total ?? 0) : 0;
   return {
-    generous_rate: `${((generousN / n) * 100).toFixed(1)}%`,
-    equal_rate: `${((equalN / n) * 100).toFixed(1)}%`,
-    selfish_rate: `${((selfishN / n) * 100).toFixed(1)}%`,
+    generous_rate: generousN / n,
+    equal_rate: equalN / n,
+    selfish_rate: selfishN / n,
     block_self_total: blockSelfTotal,
     block_other_total: blockOtherTotal,
     self_total: selfTotal,

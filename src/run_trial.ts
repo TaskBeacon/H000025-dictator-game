@@ -72,6 +72,10 @@ export function run_trial(
   const equalKey = keyList[1] ?? "space";
   const selfishKey = keyList[2] ?? "j";
   const triggerMap = (settings.triggers ?? {}) as Record<string, unknown>;
+  const trigger = (name: string): number | null => {
+    const value = triggerMap[name];
+    return value == null ? null : Number(value);
+  };
 
   const stakePromptDuration = Number(settings.stake_prompt_duration ?? 0.6);
   const preDecisionFixationDuration = Number(settings.pre_decision_fixation_duration ?? 0.5);
@@ -101,7 +105,10 @@ export function run_trial(
     },
     stim_id: "stake_prompt_text"
   });
-  stakePrompt.show({ duration: stakePromptDuration }).to_dict();
+  stakePrompt.show({
+    duration: stakePromptDuration,
+    onset_trigger: trigger(`${parsed.condition}_prompt_onset`)
+  }).to_dict();
 
   const preDecisionFixation = trial.unit("pre_decision_fixation").addStim(stimBank.get("fixation"));
   set_trial_context(preDecisionFixation, {
@@ -149,6 +156,7 @@ export function run_trial(
       keys: [generousKey, equalKey, selfishKey],
       correct_keys: [generousKey, equalKey, selfishKey],
       duration: decisionDuration,
+      onset_trigger: trigger(`${parsed.condition}_decision_onset`),
       response_trigger: Number(triggerMap.decision_response ?? 50),
       timeout_trigger: Number(triggerMap.decision_timeout ?? 51)
     })
@@ -194,11 +202,32 @@ export function run_trial(
       stage: "choice_feedback",
       condition: parsed.condition,
       stake: parsed.stake,
+      choice: (snapshot: TrialSnapshot) =>
+        (snapshot.units.decision?.choice_state as { choice?: AllocationChoice } | undefined)?.choice ?? "equal",
+      timed_out: (snapshot: TrialSnapshot) =>
+        (snapshot.units.decision?.choice_state as { timed_out?: boolean } | undefined)?.timed_out ?? true,
       block_idx
     },
-    stim_id: "choice_feedback"
+    stim_id: (snapshot: TrialSnapshot) => {
+      const choiceState = snapshot.units.decision?.choice_state as
+        | { choice?: AllocationChoice; timed_out?: boolean }
+        | undefined;
+      if (!choiceState || choiceState.timed_out) {
+        return "decision_timeout";
+      }
+      if (choiceState?.choice === "generous") {
+        return "decision_generous";
+      }
+      if (choiceState?.choice === "selfish") {
+        return "decision_selfish";
+      }
+      return "decision_equal";
+    }
   });
-  choiceFeedback.show({ duration: choiceFeedbackDuration }).to_dict();
+  choiceFeedback.show({
+    duration: choiceFeedbackDuration,
+    onset_trigger: trigger("choice_feedback_onset")
+  }).to_dict();
 
   const outcomeFeedback = trial.unit("outcome_feedback").addStim((snapshot: TrialSnapshot) => {
     const payload = snapshot.units.decision?.outcome_payload as DictatorOutcomeRecord | undefined;
@@ -222,11 +251,26 @@ export function run_trial(
       stage: "outcome_feedback",
       condition: parsed.condition,
       stake: parsed.stake,
+      choice: (snapshot: TrialSnapshot) =>
+        (snapshot.units.decision?.outcome_payload as DictatorOutcomeRecord | undefined)?.choice ?? "equal",
+      self_amount: (snapshot: TrialSnapshot) =>
+        (snapshot.units.decision?.outcome_payload as DictatorOutcomeRecord | undefined)?.self_amount ?? 0,
+      other_amount: (snapshot: TrialSnapshot) =>
+        (snapshot.units.decision?.outcome_payload as DictatorOutcomeRecord | undefined)?.other_amount ?? 0,
+      self_total: (snapshot: TrialSnapshot) =>
+        (snapshot.units.decision?.outcome_payload as DictatorOutcomeRecord | undefined)?.self_total ??
+        controller.self_total,
+      other_total: (snapshot: TrialSnapshot) =>
+        (snapshot.units.decision?.outcome_payload as DictatorOutcomeRecord | undefined)?.other_total ??
+        controller.other_total,
       block_idx
     },
     stim_id: "outcome_feedback"
   });
-  outcomeFeedback.show({ duration: outcomeFeedbackDuration }).to_dict();
+  outcomeFeedback.show({
+    duration: outcomeFeedbackDuration,
+    onset_trigger: trigger("outcome_feedback_onset")
+  }).to_dict();
 
   const iti = trial.unit("iti").addStim(stimBank.get("fixation"));
   set_trial_context(iti, {
@@ -242,7 +286,7 @@ export function run_trial(
     },
     stim_id: "fixation"
   });
-  iti.show({ duration: itiDuration }).to_dict();
+  iti.show({ duration: itiDuration, onset_trigger: trigger("iti_onset") }).to_dict();
 
   trial.finalize((snapshot, _runtime, helpers) => {
     const choiceState = snapshot.units.decision?.choice_state as

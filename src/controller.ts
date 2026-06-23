@@ -1,3 +1,5 @@
+import { PythonRandom } from "psyflow-web";
+
 export interface AllocationProfile {
   label: string;
   self_ratio: number;
@@ -26,23 +28,6 @@ export interface DictatorOutcomeRecord {
   other_total: number;
 }
 
-function makeSeededRandom(seed: number): () => number {
-  let value = seed >>> 0;
-  return () => {
-    value = (value + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(value ^ (value >>> 15), 1 | value);
-    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function shuffleInPlace<T>(values: T[], rng: () => number): void {
-  for (let index = values.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(rng() * (index + 1));
-    [values[index], values[swapIndex]] = [values[swapIndex], values[index]];
-  }
-}
-
 function normalizeRatio(value: number): number {
   if (!Number.isFinite(value)) {
     return 0.5;
@@ -50,10 +35,22 @@ function normalizeRatio(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
+function pythonRound(value: number): number {
+  const floor = Math.floor(value);
+  const fraction = value - floor;
+  if (fraction < 0.5) {
+    return floor;
+  }
+  if (fraction > 0.5) {
+    return floor + 1;
+  }
+  return floor % 2 === 0 ? floor : floor + 1;
+}
+
 export class Controller {
   readonly seed: number;
   readonly enable_logging: boolean;
-  private readonly rng: () => number;
+  private readonly rng: PythonRandom;
   private readonly allocations: Record<string, AllocationProfile>;
   private readonly stakes: Record<string, number>;
   private history: DictatorOutcomeRecord[] = [];
@@ -68,7 +65,7 @@ export class Controller {
   }) {
     this.seed = Number(args.seed ?? 25025);
     this.enable_logging = args.enable_logging !== false;
-    this.rng = makeSeededRandom(this.seed);
+    this.rng = new PythonRandom(this.seed);
     this.allocations = this.buildAllocations(args.allocation_profiles);
     this.stakes = this.buildStakes(args.stake_levels);
   }
@@ -107,7 +104,7 @@ export class Controller {
   private buildStakes(raw: Record<string, number>): Record<string, number> {
     const stakes: Record<string, number> = {};
     for (const [key, value] of Object.entries(raw ?? {})) {
-      stakes[String(key)] = Math.max(1, Number(value));
+      stakes[String(key)] = Math.max(1, Math.trunc(Number(value)));
     }
     if (Object.keys(stakes).length === 0) {
       throw new Error("controller.stake_levels must be a non-empty mapping");
@@ -149,7 +146,7 @@ export class Controller {
     for (let index = 0; index < nTrials; index += 1) {
       scheduled.push(validConditions[index % validConditions.length]);
     }
-    shuffleInPlace(scheduled, this.rng);
+    this.rng.shuffle(scheduled);
 
     const planned: PlannedDictatorCondition[] = [];
     scheduled.forEach((condition, index) => {
@@ -177,8 +174,8 @@ export class Controller {
     timed_out: boolean;
   }): DictatorOutcomeRecord {
     const profile = this.get_allocation(args.choice);
-    const stake = Math.max(1, Math.round(Number(args.stake)));
-    const selfAmount = Math.max(0, Math.min(stake, Math.round(stake * profile.self_ratio)));
+    const stake = Math.max(1, Math.trunc(Number(args.stake)));
+    const selfAmount = Math.max(0, Math.min(stake, pythonRound(stake * profile.self_ratio)));
     const otherAmount = stake - selfAmount;
 
     this.self_total += selfAmount;
